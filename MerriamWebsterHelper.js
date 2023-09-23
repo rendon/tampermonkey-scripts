@@ -16,6 +16,43 @@
 (function() {
     'use strict';
 
+    // Helpers
+    function createButton(caption) {
+        const button = document.createElement('button');
+        button.append(caption);
+        return button;
+    }
+
+    function createLabel(caption) {
+        const label = document.createElement('span');
+        label.append(caption);
+        return label;
+    }
+
+    function getWordTitleContainer() {
+        const wordRow = document.getElementsByClassName('parts-of-speech');
+        if (wordRow.length === 0) {
+            return null;
+        }
+        return wordRow[0].parentElement;
+    }
+
+    function onTheDictionaryPage() {
+        return getWordTitleContainer() != null;
+    }
+
+    function getWordOfTheDayTitleContainer() {
+        const results = document.querySelectorAll('div.word-and-pronunciation h2');
+        if (results.length === 0) {
+            return null;
+        }
+        return results[0];
+    }
+
+    function onTheWordOfTheDayPage() {
+        return getWordOfTheDayTitleContainer() != null;
+    }
+
     // Merriam-Websters' search form gets focused every time a tab becomes visible,
     // this interferes with Vimium.
 
@@ -37,16 +74,8 @@
     // =================================================================================================================
     const wordStatusStyle = 'margin: 2px; padding: 3px 3px; color: gray;';
     const saveButtonStyle = 'margin: 2px; padding: 3px 3px; border-radius: 5px;';
-    function getWordRow() {
-        const wordRow = document.getElementsByClassName('parts-of-speech');
-        if (wordRow.length === 0) {
-            return null;
-        }
-        return wordRow[0].parentElement;
-    }
-
     function getWord() {
-        const wordRow = getWordRow();
+        const wordRow = getWordTitleContainer();
         if (wordRow == null) {
             return null;
         }
@@ -58,19 +87,21 @@
         return wordElement[0].textContent;
     }
 
-    const wordRow = getWordRow();
-    if (wordRow) {
+    if (onTheDictionaryPage()) {
+        // Remove the official Save button to avoid discrepancies with the new button.
+        document.getElementById('save-word-dropdown-menu-nav-item').remove();
+
+        const wordTitleContainer = getWordTitleContainer();
+        console.log("We're on the dictionary page");
         const wordStatus = document.createElement('span');
         wordStatus.setAttribute('style', wordStatusStyle);
-        wordRow.append(wordStatus);
+        wordTitleContainer.append(wordStatus);
 
         const word = getWord();
-        const savedLabel = document.createElement('span');
-        savedLabel.append('SAVED');
+        const savedLabel = createLabel('Saved');
 
-        const saveButton = document.createElement('button');
+        const saveButton = createButton('Save');
         saveButton.setAttribute('style', saveButtonStyle);
-        saveButton.append('Save');
         function handleSaveWord(response) {
             const data = JSON.parse(response.responseText);
             if (data.status === 'success') {
@@ -114,59 +145,55 @@
 
     // =================================================================================================================
 
-    const wordOfTheDayElement = document.querySelectorAll('div.word-and-pronunciation h2');
-    if (wordOfTheDayElement.length === 0) {
-        return
-    }
-    console.log("On Word of the Day page")
-    const word = wordOfTheDayElement[0].textContent;
-    const wordAttributes = document.querySelectorAll('div.word-attributes');
-    const wordStatus = document.createElement('span');
-    wordStatus.setAttribute('style', wordStatusStyle);
-    wordAttributes[0].append(wordStatus);
+    if (onTheWordOfTheDayPage()) {
+        console.log("On Word of the Day page")
+        const wordOfTheDayContainer = getWordOfTheDayTitleContainer();
+        const word = wordOfTheDayContainer.textContent;
+        const wordAttributes = document.querySelectorAll('div.word-attributes');
+        const wordStatus = document.createElement('span');
+        wordStatus.setAttribute('class', 'word-syllables');
+        wordAttributes[0].append(wordStatus);
 
-    const savedLabel = document.createElement('span');
-    savedLabel.append('SAVED');
+        const savedLabel = createLabel('Saved');
+        const handleSaveResponse = function (response) {
+            const data = JSON.parse(response.responseText);
+            if (data.status === 'success') {
+                wordStatus.removeChild(saveButton);
+                wordStatus.append(savedLabel);
+                console.log("Saved word successfully");
+            } else {
+                console.error("Unable to save word");
+            }
+        };
 
-    const handleSaveResponse = function(response) {
-        const data = JSON.parse(response.responseText);
-        if (data.status === 'success') {
-            wordStatus.removeChild(saveButton);
-            wordStatus.append(savedLabel);
-            console.log("Saved word successfully");
-        } else {
-            console.error("Unable to save word");
-        }
-    };
+        const saveButton = createButton('Save');
+        saveButton.setAttribute('style', saveButtonStyle);
 
-    const saveButton = document.createElement('button');
-    saveButton.setAttribute('style', saveButtonStyle);
-
-    saveButton.append('Save');
-    saveButton.addEventListener('click', function () {
-        GM_xmlhttpRequest({
-            method: 'POST',
-            url: 'https://www.merriam-webster.com/lapi/v1/wordlist/save',
-            onload: handleSaveResponse,
-            data: 'word=' + word + '&type=d',
-            headers: {
-                'Accept': 'application/json, text/javascript, */*; q=0.01',
-                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            },
+        saveButton.addEventListener('click', function () {
+            GM_xmlhttpRequest({
+                method: 'POST',
+                url: 'https://www.merriam-webster.com/lapi/v1/wordlist/save',
+                onload: handleSaveResponse,
+                data: 'word=' + word + '&type=d',
+                headers: {
+                    'Accept': 'application/json, text/javascript, */*; q=0.01',
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                },
+            });
         });
-    });
 
-    const handleIsSavedResponse = function(response) {
-        const isSaved = JSON.parse(response.responseText).data.data.saved;
-        if (isSaved) {
-            wordStatus.append(savedLabel);
-        } else {
-            wordStatus.append(saveButton);
-        }
-    };
-    GM_xmlhttpRequest({
-        method: 'GET',
-        url: 'https://www.merriam-webster.com/lapi/v1/wordlist/is-saved?word=' + word + '&type=d',
-        onload: handleIsSavedResponse
-    });
+        const handleIsSavedResponse = function (response) {
+            const isSaved = JSON.parse(response.responseText).data.data.saved;
+            if (isSaved) {
+                wordStatus.append(savedLabel);
+            } else {
+                wordStatus.append(saveButton);
+            }
+        };
+        GM_xmlhttpRequest({
+            method: 'GET',
+            url: 'https://www.merriam-webster.com/lapi/v1/wordlist/is-saved?word=' + word + '&type=d',
+            onload: handleIsSavedResponse
+        });
+    }
 })();

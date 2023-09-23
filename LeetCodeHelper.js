@@ -13,6 +13,15 @@
 
 (function() {
     'use strict';
+
+    // Helpers
+    function createButton(caption) {
+        const button = document.createElement('button');
+        button.append(caption);
+        return button;
+    }
+
+    // =================================================================================================================
     setTimeout(function() {
         const buttonStyle = 'margin: 2px; padding: 3px 3px; border: solid var(--gray-60) 3px; border-radius: 3px;';
         console.log("LeetCode Helper");
@@ -22,8 +31,7 @@
             return;
         }
         console.log("Found nav bar");
-        const copyURLButton = document.createElement('button');
-        copyURLButton.append("URL/ID");
+        const copyURLButton = createButton('URL/ID');
         copyURLButton.setAttribute('style', buttonStyle);
         copyURLButton.addEventListener("click", function() {
             const problemId = getProblemId();
