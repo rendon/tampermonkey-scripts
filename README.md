@@ -1,2 +1,2 @@
-# Tampermonkey scripts
-A few handy scripts to improve the Web experience.
+# Tamper Monkey scripts
+A collections of makeshift scripts that help me simplify my interactions with certain websites.

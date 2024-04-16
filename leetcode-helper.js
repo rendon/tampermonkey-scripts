@@ -2,7 +2,7 @@
 // @name         LeetCode Helper
 // @namespace    http://tampermonkey.net/
 // @version      0.1
-// @description  Facilitate interations with the LeetCode website. It adds two botton on the top-left to easily copy the problem ID and problem URL.
+// @description  Facilitate interactions with the LeetCode website. It adds one button on the top-left to easily copy the problem ID and problem URL.
 // @author       Rafael Rendon Pablo
 // @match        https://leetcode.com/problems/*/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=leetcode.com
@@ -13,15 +13,6 @@
 
 (function() {
     'use strict';
-
-    // Helpers
-    function createButton(caption) {
-        const button = document.createElement('button');
-        button.append(caption);
-        return button;
-    }
-
-    // =================================================================================================================
     setTimeout(function() {
         const buttonStyle = 'margin: 2px; padding: 3px 3px; border: solid var(--gray-60) 3px; border-radius: 3px;';
         console.log("LeetCode Helper");
@@ -31,7 +22,8 @@
             return;
         }
         console.log("Found nav bar");
-        const copyURLButton = createButton('URL/ID');
+        const copyURLButton = document.createElement('button');
+        copyURLButton.append("URL/ID");
         copyURLButton.setAttribute('style', buttonStyle);
         copyURLButton.addEventListener("click", function() {
             const problemId = getProblemId();
